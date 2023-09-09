@@ -4,16 +4,18 @@ const bodyParser = require("body-parser");
 const { spawn } = require("child_process");
 const PDFDocument = require("pdfkit");
 const app = express();
+const multer = require("multer");
 const port = 3002;
 app.use(cors())
 
 app.use(bodyParser.json({limit:'10mb'}));
 
-// Serve your static files if needed
-app.use(express.static("public"));
+const storage = multer.memoryStorage(); // Store the file data in memory
+const upload = multer({ storage }); 
 
-app.post("/getpdf", async (req, res) => {
-  const { name, image } = req.body;
+app.post("/getpdf", upload.single("image"), async (req, res) => {
+  const { name } = req.body;
+  const imageBuffer = req.file.buffer
   const doc = new PDFDocument();
   console.log('\n\n\nerti\n\n\n')
   // Set response headers
@@ -24,7 +26,7 @@ app.post("/getpdf", async (req, res) => {
   doc.font('fonts/sylfaen.ttf');
   console.log('\n\n\nori\n\n\n')
   // Draw the image
-  doc.image(image);
+  doc.image(imageBuffer);
 
   // Add the name text
   doc.moveDown();
