@@ -14,23 +14,49 @@ const storage = multer.memoryStorage(); // Store the file data in memory
 const upload = multer({ storage }); 
 
 app.post("/getpdf", upload.single("image"), async (req, res) => {
-  const { name } = req.body;
+  const { name, email, surname, phone_number, about_me, experiences, educations } = req.body;
+  let parsedExperiences = [], parsedEducations = []
+  try {
+    parsedExperiences = JSON.parse(experiences);
+    console.log(parsedExperiences);
+    parsedEducations = JSON.parse(educations);
+    console.log(parsedEducations);
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+  }
   const imageBuffer = req.file.buffer
   const doc = new PDFDocument();
-  console.log('\n\n\nerti\n\n\n')
+  console.log(req.body)
+
   // Set response headers
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename=generated.pdf`);
 
   // Load the font
   doc.font('fonts/sylfaen.ttf');
-  console.log('\n\n\nori\n\n\n')
-  // Draw the image
-  doc.image(imageBuffer);
-
-  // Add the name text
-  doc.moveDown();
-  doc.text(`Name: ${name}`);
+  doc.image(imageBuffer, doc.page.width - doc.page.width / 3, 0, {
+    fit: [doc.page.width / 3, doc.page.height / 5],
+  });
+  // doc.moveDown();
+  doc.fontSize(17).fillColor('orange').text(name);
+  doc.fontSize(11).fillColor('black').text(`tel.: ${phone_number}`);
+  doc.text(email);
+  doc.fontSize(13).fillColor('orange').text(`ჩემს შესახებ`);
+  doc.fillColor('black').fontSize(11).text(about_me);
+  doc.lineTo(400, 100);
+  doc.lineTo(0, 300);
+  doc.fontSize(13).fillColor('orange').text(`გამოცდილება`);
+  for(let i=0; i<parsedExperiences.length; i++) {
+    doc.fontSize(11).fillColor('black').text(parsedExperiences[i].position+ ', '+parsedExperiences[i].employer);
+    doc.fillColor('gray').text(parsedExperiences[i].start_date+ ' - '+parsedExperiences[i].due_date);
+    doc.fillColor('black').text(parsedExperiences[i].description);
+  }
+  doc.fontSize(13).fillColor('orange').text(`განათლება`);
+  for(let i=0; i<parsedEducations.length; i++) {
+    doc.fontSize(11).fillColor('black').text(parsedEducations[i].degree_id+ ', ' +parsedEducations[i].institute);
+    doc.fillColor('gray').text(parsedEducations[i].due_date);
+    doc.fillColor('black').text(parsedEducations[i].description);
+  }
   console.log('\n\n\nsami\n\n\n')
   // Finalize the PDF document and send as the response
   doc.end();
